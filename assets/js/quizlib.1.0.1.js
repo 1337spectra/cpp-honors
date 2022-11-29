@@ -88,7 +88,7 @@ var Quiz = function(quizContainer, answers) {
 		}
 	}
 
-	if (this.answers.length != this.questions.length) {
+	if (this.answers.length !== this.questions.length) {
 		throw new Error("Number of answers does not match number of questions!");
 	}
 };
@@ -158,7 +158,7 @@ Quiz.prototype.checkAnswers = function(flagUnanswered) {
 			}
 		}
 		// Remove single answer from array to match provided answer format
-		if (userAnswer.length == 1 && !Array.isArray(answer)) {
+		if (userAnswer.length === 1 && !Array.isArray(answer)) {
 			userAnswer = userAnswer[0];
 		} else if (userAnswer.length === 0) {
 			unansweredQs.push(question);
@@ -327,7 +327,7 @@ var Utils = function() {};
  * @return {boolean} True if objects are equal
  */
 Utils.compare = function(obj1, obj2) {
-	if (obj1.length != obj2.length) return false;
+	if (obj1.length !== obj2.length) return false;
 
 	if (Array.isArray(obj1) && Array.isArray(obj2)) {
 		for (var i=0; i < obj1.length; i++) {
