@@ -12,7 +12,6 @@ var quizzes = {};
  * In this example, the same function is being used for every quiz so we pass the ID of the quiz element and
  * retrieve the respective quiz instance from the quiz map we created in the window.onload function.
  */
-function showResults(quizID) {
     // Retrieve the quiz instance for this quiz element from the map.
     var activeQuiz = quizzes[quizID];
     // Check answers and continue if all questions have been answered
@@ -38,7 +37,6 @@ function showResults(quizID) {
         // Highlight questions according to whether they were correctly answered. The callback allows us to highlight/show the correct answer
         activeQuiz.highlightResults(handleAnswers);
     }
-}
 
 /** Callback for Quiz.highlightResults. Highlights the correct answers of incorrectly answered questions 
  * Parameters are: the quiz object, the question element, question number, correctly answered flag
