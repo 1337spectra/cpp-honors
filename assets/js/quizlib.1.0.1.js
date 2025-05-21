@@ -59,7 +59,7 @@ QuizResult.prototype.setResults = function(questionResults) {
  * @param {Array} answers – array of correct answers (e.g. ['a', '7', ['a','b']])
  */
 function Quiz(quizContainer, answers) {
-  this.container = 
+  this.container =
     typeof quizContainer === 'string'
       ? document.getElementById(quizContainer)
       : quizContainer;
@@ -79,11 +79,7 @@ function Quiz(quizContainer, answers) {
 
   if (this.answers.length !== this.questions.length) {
     throw new Error(
-      'Number of answers (' +
-        this.answers.length +
-        ') does not match number of questions (' +
-        this.questions.length +
-        ')!'
+      `Number of answers (${this.answers.length}) does not match number of questions (${this.questions.length})!`
     );
   }
 }
@@ -181,15 +177,15 @@ Quiz.prototype.clearHighlights = function(question) {
  */
 Quiz.prototype.highlightResults = function(questionCallback) {
   for (let i = 0; i < this.questions.length; i++) {
-    const q = this.questions[i];
-    const title = q.getElementsByClassName(Quiz.Classes.QUESTION_TITLE)[0];
+    const currentQuestion = this.questions[i];
+    const titleEl = currentQuestion.getElementsByClassName(Quiz.Classes.QUESTION_TITLE)[0];
     if (this.result.results[i]) {
-      title.classList.add(Quiz.Classes.CORRECT);
+      titleEl.classList.add(Quiz.Classes.CORRECT);
     } else {
-      title.classList.add(Quiz.Classes.INCORRECT);
+      titleEl.classList.add(Quiz.Classes.INCORRECT);
     }
     if (typeof questionCallback === 'function') {
-      questionCallback(this, q, i, this.result.results[i]);
+      questionCallback(this, currentQuestion, i, this.result.results[i]);
     }
   }
 };
