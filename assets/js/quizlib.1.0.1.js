@@ -4,197 +4,192 @@
  * https://alpsquid.github.io/quizlib
  */
 
-const Quiz = function(quizContainer, answers) {
-    this.container = typeof quizContainer === 'string'
-        ? document.getElementById(quizContainer)
-        : quizContainer;
-    this.answers = answers;
-    this.questions = Array.from(
-        this.container.getElementsByClassName(Quiz.Classes.QUESTION)
-    );
-    this.unansweredQuestionText = 'Please answer this question!';
-    this.result = new QuizResult();
-    this.hideOnCorrect = false;
-    this.showCorrect = false;
-    this.showIncorrect = false;
-    this.resetOnUnanswered = false;
-
-    // Deprecated—prefer static Quiz.Classes
-    this.Classes = Object.freeze({
-        QUESTION: 'quizlib-question',
-        QUESTION_TITLE: 'quizlib-question-title',
-        QUESTION_ANSWERS: 'quizlib-question-answers',
-        QUESTION_WARNING: 'quizlib-question-warning',
-        CORRECT: 'quizlib-correct',
-        INCORRECT: 'quizlib-incorrect',
-        TEMP: 'quizlib-temp',
-    });
-};
-
-Quiz.Classes = Object.freeze({
-    QUESTION: 'quizlib-question',
-    QUESTION_TITLE: 'quizlib-question-title',
-    QUESTION_ANSWERS: 'quizlib-question-answers',
-    QUESTION_WARNING: 'quizlib-question-warning',
-    CORRECT: 'quizlib-correct',
-    INCORRECT: 'quizlib-incorrect',
-    TEMP: 'quizlib-temp',
-});
-
 /**
- * Checks quiz answers. If flagUnanswered is true, highlights unanswered questions
- * @param {boolean} [flagUnanswered=true]
- * @returns {boolean} true if all answered, false otherwise
+ * Utility namespace (hoisted)
+ * Holds static helper methods used by Quiz and QuizResult.
  */
-Quiz.prototype.checkAnswers = function(flagUnanswered = true) {
-    const unansweredQs = [];
-    const questionResults = [];
-
-    for (let i = 0; i < this.questions.length; i++) {
-        const question = this.questions[i];
-        const answer = this.answers[i];
-        this.clearHighlights(question);
-
-        const answerInputs = question
-            .getElementsByClassName(Quiz.Classes.QUESTION_ANSWERS)[0]
-            .getElementsByTagName('input');
-
-        // gather user answers
-        const userAnswerArr = [];
-        for (let k = 0; k < answerInputs.length; k++) {
-            const input = answerInputs[k];
-            if ((input.type === 'checkbox' || input.type === 'radio') && input.checked) {
-                userAnswerArr.push(input.value);
-            } else if (input.value !== '') {
-                userAnswerArr.push(input.value);
-            }
-        }
-
-        let userAnswer = userAnswerArr;
-        if (userAnswerArr.length === 1 && !Array.isArray(answer)) {
-            userAnswer = userAnswerArr[0];
-        } else if (userAnswerArr.length === 0) {
-            unansweredQs.push(question);
-        }
-
-        questionResults.push(Utils.compare(userAnswer, answer));
-    }
-
-    if (unansweredQs.length === 0 || !flagUnanswered) {
-        this.result.setResults(questionResults);
-        return true;
-    }
-
-    // highlight unanswered
-    for (let i = 0; i < unansweredQs.length; i++) {
-        const warning = document.createElement('span');
-        warning.appendChild(document.createTextNode(this.unansweredQuestionText));
-        warning.className = Quiz.Classes.QUESTION_WARNING;
-        unansweredQs[i]
-            .getElementsByClassName(Quiz.Classes.QUESTION_TITLE)[0]
-            .appendChild(warning);
-    }
-    return false;
-};
+function Utils() {
+  // intentionally empty
+}
 
 /**
- * Clears any correct/incorrect highlights or temp elements on a question
- * @param {HTMLElement} question
- */
-Quiz.prototype.clearHighlights = function(question) {
-    // remove warnings
-    const questionWarnings = question.getElementsByClassName(Quiz.Classes.QUESTION_WARNING);
-    while (questionWarnings.length > 0) {
-        questionWarnings[0].parentNode.removeChild(questionWarnings[0]);
-    }
-
-    // remove correct/incorrect classes
-    const highlightedGroups = [
-        question.getElementsByClassName(Quiz.Classes.CORRECT),
-        question.getElementsByClassName(Quiz.Classes.INCORRECT),
-    ];
-    for (let g = 0; g < highlightedGroups.length; g++) {
-        while (highlightedGroups[g].length > 0) {
-            const el = highlightedGroups[g][0];
-            el.classList.remove(Quiz.Classes.CORRECT);
-            el.classList.remove(Quiz.Classes.INCORRECT);
-        }
-    }
-
-    // remove any temp elements
-    const tempEls = question.getElementsByClassName(Quiz.Classes.TEMP);
-    while (tempEls.length > 0) {
-        tempEls[0].parentNode.removeChild(tempEls[0]);
-    }
-};
-
-/**
- * Adds correct/incorrect CSS classes based on the last result
- * @param {function} [questionCallback] called as (quiz, questionEl, index, resultBool)
- */
-Quiz.prototype.highlightResults = function(questionCallback) {
-    for (let i = 0; i < this.questions.length; i++) {
-        const question = this.questions[i];
-        const titleEl = question.getElementsByClassName(Quiz.Classes.QUESTION_TITLE)[0];
-        if (this.result.results[i]) {
-            titleEl.classList.add(Quiz.Classes.CORRECT);
-        } else {
-            titleEl.classList.add(Quiz.Classes.INCORRECT);
-        }
-        if (typeof questionCallback === 'function') {
-            questionCallback(this, question, i, this.result.results[i]);
-        }
-    }
-};
-
-/**
- * Holds quiz scoring data
- */
-const QuizResult = function() {
-    this.results = [];
-    this.totalQuestions = 0;
-    this.score = 0;
-    this.scorePercent = 0;
-    this.scorePercentFormatted = 0;
-};
-
-/**
- * Populate results and calculate score/stats
- * @param {boolean[]} questionResults
- */
-QuizResult.prototype.setResults = function(questionResults) {
-    this.results = questionResults;
-    this.totalQuestions = questionResults.length;
-    this.score = 0;
-    for (let i = 0; i < questionResults.length; i++) {
-        if (questionResults[i]) {
-            this.score++;
-        }
-    }
-    this.scorePercent = this.score / this.totalQuestions;
-    this.scorePercentFormatted = Math.floor(this.scorePercent * 100);
-};
-
-/**
- * Utility namespace
- */
-const Utils = function() {
-    // intentionally empty: namespace for static methods
-};
-
-/**
- * Compare two values or arrays (no coercion)
+ * Compare two values or arrays (strict, order-sensitive)
  * @param {*} obj1
  * @param {*} obj2
  * @returns {boolean}
  */
 Utils.compare = function(obj1, obj2) {
+  if (Array.isArray(obj1) && Array.isArray(obj2)) {
     if (obj1.length !== obj2.length) return false;
-    if (Array.isArray(obj1) && Array.isArray(obj2)) {
-        for (let i = 0; i < obj1.length; i++) {
-            if (obj1[i] !== obj2[i]) return false;
-        }
-        return true;
+    for (let i = 0; i < obj1.length; i++) {
+      if (obj1[i] !== obj2[i]) return false;
     }
-    return obj1 === obj2;
+    return true;
+  }
+  return obj1 === obj2;
+};
+
+/**
+ * QuizResult constructor (hoisted)
+ * Holds scoring data and computes percentages.
+ */
+function QuizResult() {
+  this.results = [];
+  this.totalQuestions = 0;
+  this.score = 0;
+  this.scorePercent = 0;
+  this.scorePercentFormatted = 0;
+}
+
+/**
+ * Populate results and calculate score / percentages
+ * @param {boolean[]} questionResults
+ */
+QuizResult.prototype.setResults = function(questionResults) {
+  this.results = questionResults;
+  this.totalQuestions = questionResults.length;
+  this.score = questionResults.filter(r => r).length;
+  this.scorePercent = this.score / this.totalQuestions;
+  this.scorePercentFormatted = Math.floor(this.scorePercent * 100);
+};
+
+/**
+ * Quiz constructor
+ * @param {string|HTMLElement} quizContainer – ID or element of the quiz
+ * @param {Array} answers – array of correct answers (e.g. ['a', '7', ['a','b']])
+ */
+function Quiz(quizContainer, answers) {
+  this.container = 
+    typeof quizContainer === 'string'
+      ? document.getElementById(quizContainer)
+      : quizContainer;
+  this.answers = answers;
+  this.questions = Array.from(
+    this.container.getElementsByClassName(Quiz.Classes.QUESTION)
+  );
+  this.unansweredQuestionText = 'Please answer this question!';
+  this.result = new QuizResult();
+  this.hideOnCorrect = false;
+  this.showCorrect = false;
+  this.showIncorrect = false;
+  this.resetOnUnanswered = false;
+
+  // Deprecated instance-level Classes; prefer Quiz.Classes
+  this.Classes = Quiz.Classes;
+
+  if (this.answers.length !== this.questions.length) {
+    throw new Error(
+      'Number of answers (' +
+        this.answers.length +
+        ') does not match number of questions (' +
+        this.questions.length +
+        ')!'
+    );
+  }
+}
+
+/**
+ * Static enum of CSS classes used by QuizLib
+ */
+Quiz.Classes = Object.freeze({
+  QUESTION: 'quizlib-question',
+  QUESTION_TITLE: 'quizlib-question-title',
+  QUESTION_ANSWERS: 'quizlib-question-answers',
+  QUESTION_WARNING: 'quizlib-question-warning',
+  CORRECT: 'quizlib-correct',
+  INCORRECT: 'quizlib-incorrect',
+  TEMP: 'quizlib-temp',
+});
+
+/**
+ * Checks all answers, flags unanswered if requested.
+ * @param {boolean} [flagUnanswered=true]
+ * @returns {boolean} true if all answered, false otherwise
+ */
+Quiz.prototype.checkAnswers = function(flagUnanswered = true) {
+  const unansweredQs = [];
+  const questionResults = [];
+
+  for (let i = 0; i < this.questions.length; i++) {
+    const question = this.questions[i];
+    const correctAnswer = this.answers[i];
+    this.clearHighlights(question);
+
+    const inputs = question
+      .getElementsByClassName(Quiz.Classes.QUESTION_ANSWERS)[0]
+      .getElementsByTagName('input');
+
+    const userArr = [];
+    for (let k = 0; k < inputs.length; k++) {
+      const inp = inputs[k];
+      if ((inp.type === 'checkbox' || inp.type === 'radio') && inp.checked) {
+        userArr.push(inp.value);
+      } else if (inp.value !== '') {
+        userArr.push(inp.value);
+      }
+    }
+
+    let userAnswer = userArr;
+    if (userArr.length === 1 && !Array.isArray(correctAnswer)) {
+      userAnswer = userArr[0];
+    } else if (userArr.length === 0) {
+      unansweredQs.push(question);
+    }
+
+    questionResults.push(Utils.compare(userAnswer, correctAnswer));
+  }
+
+  if (unansweredQs.length === 0 || !flagUnanswered) {
+    this.result.setResults(questionResults);
+    return true;
+  }
+
+  for (let j = 0; j < unansweredQs.length; j++) {
+    const warn = document.createElement('span');
+    warn.textContent = this.unansweredQuestionText;
+    warn.className = Quiz.Classes.QUESTION_WARNING;
+    unansweredQs[j]
+      .getElementsByClassName(Quiz.Classes.QUESTION_TITLE)[0]
+      .appendChild(warn);
+  }
+  return false;
+};
+
+/**
+ * Removes all warnings, highlights, and temp elements from a question
+ * @param {HTMLElement} question
+ */
+Quiz.prototype.clearHighlights = function(question) {
+  // remove unanswered warnings
+  const warns = question.getElementsByClassName(Quiz.Classes.QUESTION_WARNING);
+  while (warns.length) warns[0].remove();
+
+  // remove correct/incorrect highlights
+  [Quiz.Classes.CORRECT, Quiz.Classes.INCORRECT].forEach(cls => {
+    const elems = question.getElementsByClassName(cls);
+    while (elems.length) elems[0].classList.remove(cls);
+  });
+
+  // remove any temp elements
+  const temps = question.getElementsByClassName(Quiz.Classes.TEMP);
+  while (temps.length) temps[0].remove();
+};
+
+/**
+ * Highlights question titles as correct or incorrect
+ * @param {function} [questionCallback] – called as (quiz, questionEl, idx, isCorrect)
+ */
+Quiz.prototype.highlightResults = function(questionCallback) {
+  for (let i = 0; i < this.questions.length; i++) {
+    const q = this.questions[i];
+    const title = q.getElementsByClassName(Quiz.Classes.QUESTION_TITLE)[0];
+    if (this.result.results[i]) {
+      title.classList.add(Quiz.Classes.CORRECT);
+    } else {
+      title.classList.add(Quiz.Classes.INCORRECT);
+    }
+    if (typeof questionCallback === 'function') {
+      questionCallback(this, q, i, this.result.results[i]);
+    }
+  }
 };
